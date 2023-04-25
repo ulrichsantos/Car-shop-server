@@ -1,39 +1,35 @@
-const mysql = require('mysql');
-
-import express, { Request, Response } from 'express';
-import bodyParser from 'body-parser';
+import express from 'express';
+import { createConnection } from 'mysql2';
 
 const app = express();
 
-app.use(bodyParser.json());
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
-});
-
-app.listen(3000, () => {
-  console.log('Server listening on port 3000');
-});
-
-const connection = mysql.createConnection({
+// Conecta ao banco de dados MySQL
+const connection = createConnection({
   host: 'localhost',
   user: 'root',
-  password: '@Dartveider123',
-  database: 'teste_server_carros'
-})
-
-connection.connect((error: { stack: string; }) => {
-  if (error) {
-    console.error('Erro ao conectar ao banco de dados: ' + error.stack);
-    return;
-  }
-  console.log('Conexão bem sucedida com o banco de dados.');
+  password: 'ithigo321',
+  database: 'carro'
 });
 
-connection.query('SELECT * FROM tabela', (error: { stack: string; }, results: any, fields: any) => {
-  if (error) {
-    console.error('Erro ao executar a consulta: ' + error.stack);
+connection.connect((err) => {
+  if (err) {
+    console.error('Erro ao conectar ao banco de dados: ', err);
     return;
   }
-  console.log('Resultado da consulta: ', results);
+  console.log('Conexão bem-sucedida com o banco de dados!');
+});
+
+// Rota de teste
+app.get('/', (req, res) => {
+  connection.query('SELECT 1 + 1 AS solution', (err, results, fields) => {
+    if (err) {
+      console.error('Erro ao executar a consulta: ', err);
+      return res.status(500).json({ error: 'Erro ao executar a consulta' });
+    }
+  });
+});
+
+// Inicia o servidor
+app.listen(3000, () => {
+  console.log('Servidor iniciado na porta 3000!');
 });
