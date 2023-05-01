@@ -1,8 +1,15 @@
 import express from 'express';
-import { createConnection } from 'mysql2';
+import { OkPacket, createConnection } from 'mysql2';
 import Connection from 'mysql2/typings/mysql/lib/Connection';
+import cors = require('cors');
 
 const app = express();
+
+app.use(cors({
+  origin: ['http://localhost:5173']
+}));
+
+app.listen
 
 app.use(express.json());
 
@@ -82,6 +89,27 @@ app.post('/carros', (req, res) => {
   });
 });
 
+app.put('/carros/:codigoFipe', (req, res) => {
+  const codigoFipe = req.params.codigoFipe;
+  const { valor } = req.body;
+
+  const query = `UPDATE carros_infos SET valor = ? WHERE codigoFipe = ?`;
+  connection.query(query, [valor, codigoFipe], (err, result: OkPacket) => {
+    if (err) {
+      console.error('Erro ao executar a consulta: ', err);
+      res.status(500).send('Erro ao atualizar o valor do carro');
+      return;
+    }
+
+    if (result.affectedRows === 0) {
+      res.status(404).send('Carro não encontrado');
+      return;
+    }
+
+    res.status(200).send('Valor do carro atualizado com sucesso');
+  });
+});
+
 app.delete('/carros/:codigoFipe', (req, res) => {
   const codigoFipe = req.params.codigoFipe;
   const query = `DELETE FROM carros_infos WHERE codigoFipe = ${codigoFipe}`;
@@ -95,6 +123,6 @@ app.delete('/carros/:codigoFipe', (req, res) => {
       res.status(404).send('Carro não encontrado');
       return;
     }
-    res.status(204).send();
+    res.status(204).send('Veiculo excluido');
   });
 });
