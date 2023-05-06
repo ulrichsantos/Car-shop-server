@@ -58,11 +58,10 @@ app.get('/carros/:codigoFipe', (req, res) => {
     });
 });
 app.post('/carros', (req, res) => {
-    console.log(req);
-    const { valor, marca, modelo, anoModelo, combustivel, codigoFipe, mesReferencia, tipoVeiculo, siglaCombustivel, dataConsulta } = req.body;
-    connection.query('INSERT INTO carros_infos(valor, marca, modelo, anoModelo, combustivel, codigoFipe, mesReferencia, tipoVeiculo, siglaCombustivel, dataConsulta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [valor, marca, modelo, anoModelo, combustivel, codigoFipe, mesReferencia, tipoVeiculo, siglaCombustivel, dataConsulta], (err, results) => {
+    const { valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem } = req.body;
+    connection.query('INSERT INTO carros_infos (valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem) VALUES (?, ?, ?, ?, ?, ?, ?)', [valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem], (err, results) => {
         if (err) {
-            console.error('Erro ao adicionar o carro: ', err);
+            console.error('Erro ao adicionar o carro:', err);
             res.status(500).json({ message: 'Erro ao adicionar o carro' });
             return;
         }
