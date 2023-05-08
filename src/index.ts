@@ -2,6 +2,9 @@ import express from 'express';
 import { OkPacket, createConnection } from 'mysql2';
 import Connection from 'mysql2/typings/mysql/lib/Connection';
 import cors = require('cors');
+import fs from 'fs';
+import multer from 'multer';
+
 
 const app = express();
 
@@ -12,6 +15,21 @@ app.use(cors({
 app.listen
 
 app.use(express.json());
+
+// Configuração do Multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const carroId = req.params.carroId;
+    const folderPath = `imagens/${carroId}`;
+    fs.mkdirSync(folderPath, { recursive: true });
+    cb(null, folderPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage });
 
 interface Carro {
   valor: number;
@@ -39,6 +57,7 @@ connection.connect((err) => {
   }
   console.log('Conexão bem-sucedia com o banco de dados!');
 });
+
 
 // Inicia o servidor
 app.listen(3000, () => {
@@ -74,8 +93,8 @@ app.get('/carros/:codigoFipe', (req, res) => {
   });
 });
 
-app.post('/carros', (req, res) => {
-  const { valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem } = req.body;
+app.post('/carros', upload.array('imagens', 5), (req, res) => {
+  const { valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem, imagens } = req.body;
   
   connection.query('INSERT INTO carros_infos (valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem) VALUES (?, ?, ?, ?, ?, ?, ?)', [valor, marca, modelo, anoModelo, combustivel, codigoFipe, kilometragem], (err, results) => {
     if (err) {
@@ -83,10 +102,24 @@ app.post('/carros', (req, res) => {
       res.status(500).json({ message: 'Erro ao adicionar o carro' });
       return;
     }
+
+    const carroId = (results as OkPacket).insertId; // Obtém o ID do carro inserido
+
+    const folderPath = `imagens/${carroId}`;
+    fs.mkdirSync(folderPath, { recursive: true });
+
+    // Move as imagens para a pasta
+    if (imagens && imagens.length > 0) {
+      for (let i = 0; i < imagens.length; i++) {
+        const imagem = imagens[i];
+        const imagePath = `${folderPath}/${imagem.name}`;
+        fs.writeFileSync(imagePath, Buffer.from(imagem.data, 'base64'));
+      }
+    }
+
     res.status(201).json({ message: 'Carro adicionado com sucesso' });
   });
 });
-
 
 app.put('/carros/:codigoFipe', (req, res) => {
   const codigoFipe = req.params.codigoFipe;
